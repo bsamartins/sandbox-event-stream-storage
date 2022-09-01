@@ -30,20 +30,38 @@ services:
       - JMX_PORT=9000
     ports:
       - 0.0.0.0:9092:9092
-  kafka-ui:
-    container_name: kafka-ui
-    image: provectuslabs/kafka-ui:latest
-    ports:
-      - 3002:8080
+  kafka-connect:
+    image: confluentinc/cp-kafka-connect-base:latest
     depends_on:
       - kafka
     links:
       - kafka
     environment:
-      KAFKA_CLUSTERS_0_NAME: kafka-docker
+      CONNECT_BOOTSTRAP_SERVERS: "kafka:9094"
+      CONNECT_REST_PORT: 8083
+      CONNECT_REST_ADVERTISED_HOST_NAME: "kafka-connect"
+      CONNECT_GROUP_ID: kafka-connect-group
+      CONNECT_CONFIG_STORAGE_TOPIC: kafka-connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: kafka-connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: kafka-connect-status
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.converters.ByteArrayConverter"
+      CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.converters.ByteArrayConverter"
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 3002:8080
+    links:
+      - kafka
+      - kafka-connect
+    environment:
+      KAFKA_CLUSTERS_0_NAME: kafka-local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9094
       KAFKA_CLUSTERS_0_JMXPORT: 9000
 #      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8081
-#      KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: connect
-#      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://kafka-connect:8083
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: kafka-connect-local
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://kafka-connect:8083
 #      KAFKA_CLUSTERS_0_KSQLDBSERVER: ksqldb:8088
